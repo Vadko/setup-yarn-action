@@ -18,6 +18,7 @@ export async function main(): Promise<void> {
     return;
   }
 
+  core.info(`Yarn version: ${inputs.version}`);
   if (inputs.version != "") {
     core.info("Setting Yarn version...");
     try {
