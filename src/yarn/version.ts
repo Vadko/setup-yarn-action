@@ -12,7 +12,7 @@ export async function getYarnVersion(options?: {
   const commandLine = options?.corepack ? "corepack" : "yarn";
   const args = options?.corepack ? ["yarn", "--version"] : ["--version"];
   const res = await getExecOutput(commandLine, args, {
-    silent: true,
+    silent: false,
   });
   return res.stdout.trim();
 }
@@ -24,5 +24,5 @@ export async function getYarnVersion(options?: {
  * @returns A promise that resolves to nothing.
  */
 export async function setYarnVersion(version: string): Promise<void> {
-  await exec("yarn", ["set", "version", version], { silent: true });
+  await exec("yarn", ["set", "version", version], { silent: false });
 }

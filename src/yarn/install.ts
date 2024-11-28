@@ -24,7 +24,7 @@ export function printYarnInstallOutput(output: YarnInstallOutput): void {
 
 export async function yarnInstall(): Promise<void> {
   await exec("yarn", ["install", "--json"], {
-    silent: true,
+    silent: false,
     listeners: {
       stdline: (data) => {
         const output = JSON.parse(data) as YarnInstallOutput;

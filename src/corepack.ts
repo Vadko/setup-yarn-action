@@ -39,7 +39,7 @@ export async function corepackEnableYarn(): Promise<void> {
   await exec(
     "corepack",
     ["enable", "--install-directory", corepackDir, "yarn"],
-    { silent: true },
+    { silent: false },
   );
 
   addPath(corepackDir);

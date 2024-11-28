@@ -8,7 +8,7 @@ import { getExecOutput } from "@actions/exec";
  */
 export async function getYarnConfig(name: string): Promise<string> {
   const res = await getExecOutput("yarn", ["config", name, "--json"], {
-    silent: true,
+    silent: false,
   });
   return JSON.parse(res.stdout).effective;
 }
