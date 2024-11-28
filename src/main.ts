@@ -21,6 +21,7 @@ export async function main(): Promise<void> {
   if (inputs.version != "") {
     core.info("Setting Yarn version...");
     try {
+      core.info(`Setting Yarn version to ${inputs.version}`);
       await setYarnVersion(inputs.version);
       await corepackAssertYarnVersion();
     } catch (err) {

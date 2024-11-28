@@ -61124,6 +61124,7 @@ async function main() {
     if (inputs.version != "") {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Setting Yarn version...");
         try {
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Setting Yarn version to ${inputs.version}`);
             await (0,_yarn_index_js__WEBPACK_IMPORTED_MODULE_4__/* .setYarnVersion */ .DA)(inputs.version);
             await (0,_corepack_js__WEBPACK_IMPORTED_MODULE_3__/* .corepackAssertYarnVersion */ .N)();
         }
