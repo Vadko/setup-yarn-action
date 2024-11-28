@@ -61121,7 +61121,7 @@ async function main() {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(`Failed to enable Yarn: ${err.message}`);
         return;
     }
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Yarn version: ${inputs.version}`);
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.warning(`Yarn version: ${inputs.version}`);
     if (inputs.version != "") {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info("Setting Yarn version...");
         try {
