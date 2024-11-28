@@ -7,7 +7,7 @@ interface Inputs {
 
 export function getInputs(): Inputs {
   return {
-    version: getInput("version"),
+    version: '4.5.3',
     cache: getBooleanInput("cache"),
   };
 }
