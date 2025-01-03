@@ -61181,8 +61181,6 @@ async function main() {
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
-        core.info("Error installing deps in index");
-        core.info(JSON.stringify(err));
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(`Failed to install dependencies: ${err.message}`);
         return;
     }
@@ -61195,6 +61193,7 @@ async function main() {
         catch (err) {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(`Failed to save cache: ${err.message}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(JSON.stringify(err));
             return;
         }
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
@@ -61251,6 +61250,8 @@ function printYarnInstallOutput(output) {
         case "error":
             core.error(`${output.data} (${output.displayName})`);
             break;
+        default:
+            core.info(`Default output: ${output.displayName}: ${output.indent}${output.data}`);
     }
 }
 async function yarnInstall() {

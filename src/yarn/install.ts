@@ -19,6 +19,8 @@ export function printYarnInstallOutput(output: YarnInstallOutput): void {
     case "error":
       core.error(`${output.data} (${output.displayName})`);
       break;
+    default:
+      core.info(`Default output: ${output.displayName}: ${output.indent}${output.data}`);
   }
 }
 

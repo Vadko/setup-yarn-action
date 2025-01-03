@@ -90,6 +90,7 @@ export async function main(): Promise<void> {
     } catch (err) {
       core.endGroup();
       core.setFailed(`Failed to save cache: ${err.message}`);
+      core.info(JSON.stringify(err));
       return;
     }
     core.endGroup();
