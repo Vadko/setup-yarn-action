@@ -61181,6 +61181,7 @@ async function main() {
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+        core.info(JSON.stringify(err));
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(`Failed to install dependencies: ${err.message}`);
         return;
     }
