@@ -98,8 +98,8 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
         checkPaths(paths);
         restoreKeys = restoreKeys || [];
         const keys = [primaryKey, ...restoreKeys];
-        core.debug('Resolved Keys:');
-        core.debug(JSON.stringify(keys));
+        core.info('Resolved Keys:');
+        core.info(JSON.stringify(keys));
         if (keys.length > 10) {
             throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
         }
@@ -123,7 +123,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                 return cacheEntry.cacheKey;
             }
             archivePath = path.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
-            core.debug(`Archive Path: ${archivePath}`);
+            core.info(`Archive Path: ${archivePath}`);
             // Download the cache from the cache entry
             yield cacheHttpClient.downloadCache(cacheEntry.archiveLocation, archivePath, options);
             if (core.isDebug()) {
@@ -151,7 +151,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                 yield utils.unlinkFile(archivePath);
             }
             catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
+                core.info(`Failed to delete archive: ${error}`);
             }
         }
         return undefined;
@@ -175,14 +175,14 @@ function saveCache(paths, key, options, enableCrossOsArchive = false) {
         const compressionMethod = yield utils.getCompressionMethod();
         let cacheId = -1;
         const cachePaths = yield utils.resolvePaths(paths);
-        core.debug('Cache Paths:');
-        core.debug(`${JSON.stringify(cachePaths)}`);
+        core.info('Cache Paths:');
+        core.info(`${JSON.stringify(cachePaths)}`);
         if (cachePaths.length === 0) {
             throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
         }
         const archiveFolder = yield utils.createTempDirectory();
         const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
-        core.debug(`Archive Path: ${archivePath}`);
+        core.info(`Archive Path: ${archivePath}`);
         try {
             yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
             if (core.isDebug()) {
@@ -190,12 +190,12 @@ function saveCache(paths, key, options, enableCrossOsArchive = false) {
             }
             const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
             const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-            core.debug(`File Size: ${archiveFileSize}`);
+            core.info(`File Size: ${archiveFileSize}`);
             // For GHES, this check will take place in ReserveCache API with enterprise file size limit
             if (archiveFileSize > fileSizeLimit && !utils.isGhes()) {
                 throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
             }
-            core.debug('Reserving Cache');
+            core.info('Reserving Cache');
             const reserveCacheResponse = yield cacheHttpClient.reserveCache(key, paths, {
                 compressionMethod,
                 enableCrossOsArchive,
@@ -210,7 +210,7 @@ function saveCache(paths, key, options, enableCrossOsArchive = false) {
             else {
                 throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message}`);
             }
-            core.debug(`Saving Cache (ID: ${cacheId})`);
+            core.info(`Saving Cache (ID: ${cacheId})`);
             yield cacheHttpClient.saveCache(cacheId, archivePath, options);
         }
         catch (error) {
@@ -231,7 +231,7 @@ function saveCache(paths, key, options, enableCrossOsArchive = false) {
                 yield utils.unlinkFile(archivePath);
             }
             catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
+                core.info(`Failed to delete archive: ${error}`);
             }
         }
         return cacheId;
@@ -297,7 +297,7 @@ function getCacheApiUrl(resource) {
         throw new Error('Cache Service Url not found, unable to restore cache.');
     }
     const url = `${baseUrl}_apis/artifactcache/${resource}`;
-    core.debug(`Resource Url: ${url}`);
+    core.info(`Resource Url: ${url}`);
     return url;
 }
 function createAcceptHeader(type, apiVersion) {
@@ -357,8 +357,8 @@ function getCacheEntry(keys, paths, options) {
             throw new Error('Cache not found.');
         }
         core.setSecret(cacheDownloadUrl);
-        core.debug(`Cache Result:`);
-        core.debug(JSON.stringify(cacheResult));
+        core.info(`Cache Result:`);
+        core.info(JSON.stringify(cacheResult));
         return cacheResult;
     });
 }
@@ -371,9 +371,9 @@ function printCachesListForDiagnostics(key, httpClient, version) {
             const cacheListResult = response.result;
             const totalCount = cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.totalCount;
             if (totalCount && totalCount > 0) {
-                core.debug(`No matching cache found for cache key '${key}', version '${version} and scope ${process.env['GITHUB_REF']}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key \nOther caches with similar key:`);
+                core.info(`No matching cache found for cache key '${key}', version '${version} and scope ${process.env['GITHUB_REF']}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key \nOther caches with similar key:`);
                 for (const cacheEntry of (cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.artifactCaches) || []) {
-                    core.debug(`Cache Key: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheKey}, Cache Version: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheVersion}, Cache Scope: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.scope}, Cache Created: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.creationTime}`);
+                    core.info(`Cache Key: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheKey}, Cache Version: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheVersion}, Cache Scope: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.scope}, Cache Created: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.creationTime}`);
                 }
             }
         }
@@ -430,7 +430,7 @@ function getContentRange(start, end) {
 }
 function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
+        core.info(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
         const additionalHeaders = {
             'Content-Type': 'application/octet-stream',
             'Content-Range': getContentRange(start, end)
@@ -453,7 +453,7 @@ function uploadFile(httpClient, cacheId, archivePath, options) {
         const concurrency = utils.assertDefined('uploadConcurrency', uploadOptions.uploadConcurrency);
         const maxChunkSize = utils.assertDefined('uploadChunkSize', uploadOptions.uploadChunkSize);
         const parallelUploads = [...new Array(concurrency).keys()];
-        core.debug('Awaiting all uploads');
+        core.info('Awaiting all uploads');
         let offset = 0;
         try {
             yield Promise.all(parallelUploads.map(() => __awaiter(this, void 0, void 0, function* () {
@@ -492,10 +492,10 @@ function commitCache(httpClient, cacheId, filesize) {
 function saveCache(cacheId, archivePath, options) {
     return __awaiter(this, void 0, void 0, function* () {
         const httpClient = createHttpClient();
-        core.debug('Upload cache');
+        core.info('Upload cache');
         yield uploadFile(httpClient, cacheId, archivePath, options);
         // Commit Cache
-        core.debug('Commiting cache');
+        core.info('Commiting cache');
         const cacheSize = utils.getArchiveFileSizeInBytes(archivePath);
         core.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
         const commitCacheResponse = yield commitCache(httpClient, cacheId, cacheSize);
@@ -613,7 +613,7 @@ function resolvePaths(patterns) {
                 const relativeFile = path
                     .relative(workspace, file)
                     .replace(new RegExp(`\\${path.sep}`, 'g'), '/');
-                core.debug(`Matched: ${relativeFile}`);
+                core.info(`Matched: ${relativeFile}`);
                 // Paths are made relative so the tar entries are all relative to the root of the workspace.
                 if (relativeFile === '') {
                     // path.relative returns empty string if workspace and file are equal
@@ -645,7 +645,7 @@ function getVersion(app, additionalArgs = []) {
     return __awaiter(this, void 0, void 0, function* () {
         let versionOutput = '';
         additionalArgs.push('--version');
-        core.debug(`Checking ${app} ${additionalArgs.join(' ')}`);
+        core.info(`Checking ${app} ${additionalArgs.join(' ')}`);
         try {
             yield exec.exec(`${app}`, additionalArgs, {
                 ignoreReturnCode: true,
@@ -657,10 +657,10 @@ function getVersion(app, additionalArgs = []) {
             });
         }
         catch (err) {
-            core.debug(err.message);
+            core.info(err.message);
         }
         versionOutput = versionOutput.trim();
-        core.debug(versionOutput);
+        core.info(versionOutput);
         return versionOutput;
     });
 }
@@ -669,7 +669,7 @@ function getCompressionMethod() {
     return __awaiter(this, void 0, void 0, function* () {
         const versionOutput = yield getVersion('zstd', ['--quiet']);
         const version = semver.clean(versionOutput);
-        core.debug(`zstd version: ${version}`);
+        core.info(`zstd version: ${version}`);
         if (versionOutput === '') {
             return constants_1.CompressionMethod.Gzip;
         }
@@ -841,7 +841,7 @@ class DownloadProgress {
         this.segmentIndex = this.segmentIndex + 1;
         this.segmentSize = segmentSize;
         this.receivedBytes = 0;
-        core.debug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
+        core.info(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
     }
     /**
      * Sets the number of bytes received for the current segment.
@@ -932,7 +932,7 @@ function downloadCacheHttpClient(archiveLocation, archivePath) {
         // Abort download if no traffic received over the socket.
         downloadResponse.message.socket.setTimeout(constants_1.SocketTimeout, () => {
             downloadResponse.message.destroy();
-            core.debug(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
+            core.info(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
         });
         yield pipeResponseToStream(downloadResponse, writeStream);
         // Validate download size.
@@ -945,7 +945,7 @@ function downloadCacheHttpClient(archiveLocation, archivePath) {
             }
         }
         else {
-            core.debug('Unable to validate download, no Content-Length header');
+            core.info('Unable to validate download, no Content-Length header');
         }
     });
 }
@@ -1082,7 +1082,7 @@ function downloadCacheStorageSDK(archiveLocation, archivePath, options) {
         if (contentLength < 0) {
             // We should never hit this condition, but just in case fall back to downloading the
             // file as one large stream
-            core.debug('Unable to determine content length, downloading file with http-client...');
+            core.info('Unable to determine content length, downloading file with http-client...');
             yield downloadCacheHttpClient(archiveLocation, archivePath);
         }
         else {
@@ -1240,9 +1240,9 @@ function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRet
                 isRetryable = isRetryableStatusCode(statusCode);
                 errorMessage = `Cache service responded with ${statusCode}`;
             }
-            core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+            core.info(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
             if (!isRetryable) {
-                core.debug(`${name} - Error is not retryable`);
+                core.info(`${name} - Error is not retryable`);
                 break;
             }
             yield sleep(delay);
@@ -1609,8 +1609,8 @@ function getUploadOptions(copy) {
             result.uploadChunkSize = copy.uploadChunkSize;
         }
     }
-    core.debug(`Upload concurrency: ${result.uploadConcurrency}`);
-    core.debug(`Upload chunk size: ${result.uploadChunkSize}`);
+    core.info(`Upload concurrency: ${result.uploadConcurrency}`);
+    core.info(`Upload chunk size: ${result.uploadChunkSize}`);
     return result;
 }
 exports.getUploadOptions = getUploadOptions;
@@ -1654,12 +1654,12 @@ function getDownloadOptions(copy) {
         isFinite(Number(segmentDownloadTimeoutMins))) {
         result.segmentTimeoutInMs = Number(segmentDownloadTimeoutMins) * 60 * 1000;
     }
-    core.debug(`Use Azure SDK: ${result.useAzureSdk}`);
-    core.debug(`Download concurrency: ${result.downloadConcurrency}`);
-    core.debug(`Request timeout (ms): ${result.timeoutInMs}`);
-    core.debug(`Cache segment download timeout mins env var: ${process.env['SEGMENT_DOWNLOAD_TIMEOUT_MINS']}`);
-    core.debug(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`);
-    core.debug(`Lookup only: ${result.lookupOnly}`);
+    core.info(`Use Azure SDK: ${result.useAzureSdk}`);
+    core.info(`Download concurrency: ${result.downloadConcurrency}`);
+    core.info(`Request timeout (ms): ${result.timeoutInMs}`);
+    core.info(`Cache segment download timeout mins env var: ${process.env['SEGMENT_DOWNLOAD_TIMEOUT_MINS']}`);
+    core.info(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`);
+    core.info(`Lookup only: ${result.lookupOnly}`);
     return result;
 }
 exports.getDownloadOptions = getDownloadOptions;
@@ -5472,15 +5472,15 @@ function getOptions(copy) {
     if (copy) {
         if (typeof copy.followSymbolicLinks === 'boolean') {
             result.followSymbolicLinks = copy.followSymbolicLinks;
-            core.debug(`followSymbolicLinks '${result.followSymbolicLinks}'`);
+            core.info(`followSymbolicLinks '${result.followSymbolicLinks}'`);
         }
         if (typeof copy.implicitDescendants === 'boolean') {
             result.implicitDescendants = copy.implicitDescendants;
-            core.debug(`implicitDescendants '${result.implicitDescendants}'`);
+            core.info(`implicitDescendants '${result.implicitDescendants}'`);
         }
         if (typeof copy.omitBrokenSymbolicLinks === 'boolean') {
             result.omitBrokenSymbolicLinks = copy.omitBrokenSymbolicLinks;
-            core.debug(`omitBrokenSymbolicLinks '${result.omitBrokenSymbolicLinks}'`);
+            core.info(`omitBrokenSymbolicLinks '${result.omitBrokenSymbolicLinks}'`);
         }
     }
     return result;
@@ -5599,7 +5599,7 @@ class DefaultGlobber {
             // Push the search paths
             const stack = [];
             for (const searchPath of patternHelper.getSearchPaths(patterns)) {
-                core.debug(`Search path '${searchPath}'`);
+                core.info(`Search path '${searchPath}'`);
                 // Exists?
                 try {
                     // Intentionally using lstat. Detection for broken symlink
@@ -5694,7 +5694,7 @@ class DefaultGlobber {
                 catch (err) {
                     if (err.code === 'ENOENT') {
                         if (options.omitBrokenSymbolicLinks) {
-                            core.debug(`Broken symlink '${item.path}'`);
+                            core.info(`Broken symlink '${item.path}'`);
                             return undefined;
                         }
                         throw new Error(`No information found for the path '${item.path}'. This may indicate a broken symbolic link.`);
@@ -5716,7 +5716,7 @@ class DefaultGlobber {
                 }
                 // Test for a cycle
                 if (traversalChain.some((x) => x === realPath)) {
-                    core.debug(`Symlink cycle detected for path '${item.path}' and realpath '${realPath}'`);
+                    core.info(`Symlink cycle detected for path '${item.path}' and realpath '${realPath}'`);
                     return undefined;
                 }
                 // Update the traversal chain
